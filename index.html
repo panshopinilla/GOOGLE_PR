@@ -6,40 +6,55 @@
     <title>Tambo de Camar</title>
     
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: #fafafa; font-family: 'Roboto', sans-serif; }
         model-viewer { width: 100%; height: 100%; }
 
-        /* PANTALLA DE INICIO */
+        /* PANTALLA DE INICIO (POSTER) */
         #poster-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #1a1a1a;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; z-index: 200; text-align: center;
+            background-color: #1a1a1a; color: white; z-index: 200;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
         }
-
-        .title { font-size: 24px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; }
-        .subtitle { font-size: 14px; font-weight: 300; margin-bottom: 40px; opacity: 0.8; }
-
-        /* Botón de Inicio */
+        .title { font-size: 24px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;}
+        .subtitle { font-size: 14px; font-weight: 400; margin-bottom: 40px; opacity: 0.8; }
         #start-button {
             background-color: #d84315; color: white; border: none; border-radius: 50px;
             padding: 15px 40px; font-size: 18px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5);
+            box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5); transition: transform 0.1s;
         }
+        #start-button:active { transform: scale(0.95); }
 
-        /* Botón "Colocar" (Por si la AR se cierra y vuelven al 3D) */
+        /* --- NUEVO: BARRA DE ESTADO AR (Feedback Visual) --- */
+        #ar-status-bar {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
+            color: white; padding: 10px 20px; border-radius: 30px;
+            font-size: 13px; font-weight: bold; pointer-events: none;
+            display: none; /* Oculto por defecto */
+            white-space: nowrap; z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        /* Icono de radar animado con CSS puro */
+        .radar-icon {
+            display: inline-block; width: 10px; height: 10px; background-color: #4CAF50;
+            border-radius: 50%; margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); } 70% { opacity: 1; box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { opacity: 0; box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
+
+        /* VISIBILIDAD: Solo mostrar la barra cuando estemos en modo AR */
+        model-viewer:defined.ar-active ~ #ar-status-bar { display: flex; align-items: center; }
+
+        /* Botón de respaldo (volver a colocar) */
         #ar-button {
             position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
             background-color: white; color: #333; border: none; border-radius: 30px;
             padding: 12px 24px; font-size: 14px; font-weight: bold;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 100;
         }
-
-        /* Ocultar poster al cargar */
-        model-viewer.loaded #poster-container { display: none; }
     </style>
 </head>
 <body>
@@ -62,30 +77,54 @@
         <div slot="poster" id="poster-container">
             <div class="title">TAMBO DE CAMAR</div>
             <div class="subtitle">Experiencia de Realidad Aumentada</div>
-            <button id="start-button">📷 ACTIVAR CÁMARA</button>
+            <button id="start-button">📷 INICIAR ESCANEO</button>
         </div>
 
-        <button slot="ar-button" id="ar-button">
-            📍 VOLVER A COLOCAR
-        </button>
+        <button slot="ar-button" id="ar-button">📍 REUBICAR</button>
 
     </model-viewer>
+
+    <div id="ar-status-bar">
+        <span class="radar-icon"></span>
+        <span>Busca el círculo blanco y toca</span>
+    </div>
 
     <script>
         const viewer = document.querySelector('#viewer');
         const startBtn = document.querySelector('#start-button');
         const poster = document.querySelector('#poster-container');
+        const statusBar = document.querySelector('#ar-status-bar');
 
-        // LÓGICA DEL SALTO DIRECTO
+        // 1. INICIAR EXPERIENCIA
         startBtn.addEventListener('click', () => {
-            // 1. Quitar el poster
             viewer.dismissPoster();
             poster.style.display = 'none';
-
-            // 2. Intentar activar la cámara INMEDIATAMENTE
-            // Esto lanza la petición de AR sin pasar por la vista 3D gris
             viewer.activateAR();
         });
+
+        // 2. FEEDBACK TÁCTIL (Vibración)
+        // Detectamos cuando el usuario hace clic en el visor (intento de anclaje)
+        viewer.addEventListener('click', () => {
+             // "navigator.vibrate" hace vibrar el celular (solo Android)
+             // Vibración corta de 50ms para sentir el "Click"
+             if (navigator.vibrate) {
+                 navigator.vibrate(50); 
+             }
+        });
+
+        // 3. CAMBIAR TEXTO DE LA BARRA DE ESTADO
+        // No podemos saber EXÁCTAMENTE cuando encuentra el plano,
+        // pero podemos cambiar el texto cuando el usuario "toca" para anclar.
+        viewer.addEventListener('ar-status', (event) => {
+            if(event.detail.status === 'session-started'){
+                statusBar.innerHTML = '<span class="radar-icon"></span><span>Mueve el celular para detectar suelo</span>';
+                // Después de 3 segundos, asumimos que ya movió el cel y cambiamos la instrucción
+                setTimeout(() => {
+                    statusBar.innerHTML = '<span class="radar-icon"></span><span>Busca el círculo y toca para fijar</span>';
+                }, 3000);
+            }
+        });
+
     </script>
 
 </body>
