@@ -3,43 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tambo de Camar - Final</title>
+    <title>Tambo de Camar</title>
     
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;700&display=swap" rel="stylesheet">
 
     <style>
-        body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: #fafafa; font-family: sans-serif; }
+        body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: #fafafa; font-family: 'Roboto', sans-serif; }
         model-viewer { width: 100%; height: 100%; }
 
+        /* --- ESTILOS DE LA PANTALLA DE BIENVENIDA (POSTER) --- */
+        #poster-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1a1a1a; /* O pon una imagen: url('tu-foto.jpg'); */
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; z-index: 200; text-align: center;
+        }
+
+        .title { font-size: 24px; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .subtitle { font-size: 14px; font-weight: 300; margin-bottom: 40px; opacity: 0.8; max-width: 80%; }
+
+        /* Botón de Inicio Grande */
+        #start-button {
+            background-color: #d84315; color: white; border: none; border-radius: 50px;
+            padding: 15px 40px; font-size: 18px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5);
+            transition: transform 0.2s;
+        }
+        #start-button:active { transform: scale(0.95); }
+
+        /* --- BOTÓN DE AR (El que aparece después) --- */
         #ar-button {
             position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
-            background-color: #d84315; color: white; border: none; border-radius: 30px;
-            padding: 14px 28px; font-size: 16px; font-weight: bold; letter-spacing: 0.5px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; z-index: 100;
-            white-space: nowrap;
+            background-color: white; color: #333; border: none; border-radius: 30px;
+            padding: 12px 24px; font-size: 14px; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 100;
+            display: none; /* Oculto al principio */
         }
 
-        /* Instrucciones mejoradas */
-        #instructions {
-            position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95); padding: 15px 25px; border-radius: 25px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: none; text-align: center;
-            width: 85%; max-width: 350px;
-        }
-        #instructions h3 { margin: 0 0 5px 0; font-size: 15px; color: #d84315; }
-        #instructions p { margin: 0; font-size: 13px; color: #444; line-height: 1.4; }
-
-        /* Estilo para ocultar instrucciones en AR */
-        model-viewer:defined > #instructions { display: block; }
-        model-viewer:defined.ar-active > #instructions { display: none; }
+        /* --- LOGICA DE VISIBILIDAD --- */
+        /* Cuando el modelo carga, escondemos el poster y mostramos el botón AR */
+        model-viewer.loaded #poster-container { display: none; }
+        model-viewer.loaded #ar-button { display: block; }
         
-        /* Personalizar la manito de ayuda (opcional) */
-        :not(:defined) > .slot-interaction-prompt { display: none; }
     </style>
 </head>
 <body>
 
     <model-viewer 
+        id="viewer"
         src="./tambo.glb" 
         ios-src="./tambo.usdz"
         alt="Reconstrucción Tambo"
@@ -48,21 +61,42 @@
         ar-placement="floor"
         camera-controls 
         touch-action="pan-y"
-        interaction-prompt="auto"
-        shadow-intensity="1.2"
-        shadow-softness="1"
-        scale="0.015 0.015 0.015">
+        shadow-intensity="1.5"
+        scale="0.015 0.015 0.015"
+        reveal="manual"> 
+
+        <div slot="poster" id="poster-container">
+            <div class="title">TAMBO DE CAMAR</div>
+            <div class="subtitle">Reconstrucción Virtual y Puesta en Valor</div>
+            <button id="start-button">INICIAR EXPERIENCIA</button>
+        </div>
 
         <button slot="ar-button" id="ar-button">
             📍 COLOCAR EN MAQUETA
         </button>
 
-        <div id="instructions">
-            <h3>Antes de colocar:</h3>
-            <p>Mueve el celular de lado a lado para escanear la mesa.<br>Cuando veas un círculo, toca para fijar.</p>
-        </div>
-
     </model-viewer>
+
+    <script>
+        const viewer = document.querySelector('#viewer');
+        const startBtn = document.querySelector('#start-button');
+        const poster = document.querySelector('#poster-container');
+        const arBtn = document.querySelector('#ar-button');
+
+        // Al hacer clic en "Iniciar Experiencia"
+        startBtn.addEventListener('click', () => {
+            // 1. Decirle al visor que cargue el modelo
+            viewer.dismissPoster();
+            
+            // 2. Ocultar manualmente la pantalla de carga (para asegurar suavidad)
+            poster.style.opacity = '0';
+            poster.style.transition = 'opacity 0.5s';
+            setTimeout(() => { poster.style.display = 'none'; }, 500);
+
+            // 3. Mostrar el botón de AR
+            arBtn.style.display = 'block';
+        });
+    </script>
 
 </body>
 </html>
