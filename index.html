@@ -11,10 +11,13 @@
     <style>
         body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: 'Roboto', sans-serif; background-color: #f0f0f0; }
         
-        /* FONDO */
-        model-viewer { width: 100%; height: 100%; background-color: #f0f0f0; }
+        model-viewer { 
+            width: 100%; height: 100%; 
+            background-color: #f0f0f0;
+            transition: opacity 0.3s;
+        }
 
-        /* PANTALLA DE INICIO */
+        /* PANTALLA DE CARGA (POSTER) */
         #poster-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #1a1a1a; color: white; z-index: 200;
@@ -29,35 +32,24 @@
             box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5); text-transform: uppercase;
         }
 
-        /* BARRA DE ESTADO */
-        #ar-status-bar {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
-            color: white; padding: 10px 20px; border-radius: 30px;
-            font-size: 13px; font-weight: bold; pointer-events: none;
-            display: none; z-index: 1000; white-space: nowrap;
+        /* BOTÓN DE BLOQUEO (CANDADO) */
+        #lock-button {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px;
+            background-color: white; border-radius: 50%; border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 24px; cursor: pointer; z-index: 1000;
+            display: none; align-items: center; justify-content: center;
         }
-        .radar-icon {
-            display: inline-block; width: 10px; height: 10px; background-color: #4CAF50;
-            border-radius: 50%; margin-right: 10px;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
+        #lock-button.locked { background-color: #d32f2f; color: white; box-shadow: 0 0 15px rgba(211, 47, 47, 0.6); }
+        #lock-button.unlocked { background-color: #4CAF50; color: white; }
 
-        model-viewer:defined.ar-active ~ #ar-status-bar { display: flex; align-items: center; }
-
-        #ar-button {
-            position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
-            background-color: white; color: #333; border: none; border-radius: 30px;
-            padding: 12px 24px; font-size: 14px; font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 100;
-        }
-
-        #debug-button {
-            position: fixed; top: 20px; right: 20px;
-            background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #fff;
-            padding: 5px; font-family: monospace; font-size: 10px;
-            border-radius: 4px; cursor: pointer; z-index: 99999;
+        /* Mensaje Toast */
+        #status-toast {
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); color: white; padding: 8px 16px;
+            border-radius: 20px; font-size: 12px; pointer-events: none;
+            opacity: 0; transition: opacity 0.3s; z-index: 1001;
         }
     </style>
 </head>
@@ -87,53 +79,62 @@
             <button id="start-button">📷 INICIAR EXPERIENCIA</button>
         </div>
 
-        <button slot="ar-button" id="ar-button">📍 REUBICAR</button>
-
     </model-viewer>
 
-    <div id="ar-status-bar">
-        <span class="radar-icon"></span>
-        <span id="status-text">Escaneando superficie...</span>
-    </div>
-
-    <button id="debug-button">💾 DATOS</button>
+    <div id="status-toast">Modelo Bloqueado</div>
+    <button id="lock-button" class="unlocked">🔓</button>
 
     <script>
         const viewer = document.querySelector('#viewer');
         const startBtn = document.querySelector('#start-button');
         const poster = document.querySelector('#poster-container');
-        const statusText = document.querySelector('#status-text');
-        const debugBtn = document.querySelector('#debug-button');
+        const lockBtn = document.querySelector('#lock-button');
+        const toast = document.querySelector('#status-toast');
 
-        // 1. INICIAR (Directo a cámara)
+        let isLocked = false;
+
+        // 1. INICIAR
         startBtn.addEventListener('click', () => {
             poster.style.display = 'none';
             viewer.dismissPoster();
             viewer.activateAR(); 
         });
 
-        // 2. Feedback Táctil (Vibración)
-        viewer.addEventListener('click', () => {
-             if (navigator.vibrate) navigator.vibrate(50); 
-        });
-
-        // 3. Status simple
+        // 2. MOSTRAR CANDADO AL ENTRAR EN AR
         viewer.addEventListener('ar-status', (event) => {
             if(event.detail.status === 'session-started'){
-                statusText.innerText = 'Mueve el celular para detectar suelo';
-                // A los 3 seg cambiamos el texto
-                setTimeout(() => {
-                    statusText.innerText = 'Arrastra y escala con dos dedos';
-                }, 3000);
+                lockBtn.style.display = 'flex'; 
+            } else {
+                lockBtn.style.display = 'none';
             }
         });
 
-        // 4. Debug (Para que encuentres tu escala ideal)
-        debugBtn.addEventListener('click', () => {
-            const currentScale = viewer.scale.toString(); 
-            const currentOrientation = viewer.orientation.toString();
-            alert(`scale="${currentScale}"\n\norientation="${currentOrientation}"`);
+        // 3. LÓGICA DE BLOQUEO
+        lockBtn.addEventListener('click', () => {
+            isLocked = !isLocked; 
+
+            if (isLocked) {
+                // BLOQUEAR (Congelar interacción)
+                viewer.style.pointerEvents = 'none';
+                lockBtn.innerText = '🔒';
+                lockBtn.className = 'locked';
+                showToast("Modelo Anclado (Bloqueado)");
+                if (navigator.vibrate) navigator.vibrate([50, 50]);
+            } else {
+                // DESBLOQUEAR
+                viewer.style.pointerEvents = 'auto';
+                lockBtn.innerText = '🔓';
+                lockBtn.className = 'unlocked';
+                showToast("Modelo Desbloqueado");
+                if (navigator.vibrate) navigator.vibrate(50);
+            }
         });
+
+        function showToast(message) {
+            toast.innerText = message;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+        }
     </script>
 
 </body>
