@@ -28,6 +28,7 @@
             box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5); text-transform: uppercase;
         }
 
+        /* Botón nativo de Google (solo estilo) */
         #ar-button {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
             background-color: white; color: #333; border: none; border-radius: 30px;
@@ -51,8 +52,8 @@
         shadow-intensity="1.5"
         shadow-softness="1"
         exposure="0.8"
-        scale="0.0018 0.0018 0.0018" 
-        orientation="0deg 0deg 200deg"
+        scale="0.02 0.02 0.02" 
+        orientation="0deg 200deg 0deg"
         loading="eager" 
         reveal="manual"> 
 
@@ -71,7 +72,7 @@
         const startBtn = document.querySelector('#start-button');
         const poster = document.querySelector('#poster-container');
 
-        // INICIAR
+        // Lógica simple: Click -> Adiós Poster -> Hola Cámara
         startBtn.addEventListener('click', () => {
             poster.style.display = 'none';
             viewer.dismissPoster();
