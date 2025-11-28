@@ -3,57 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tambo de Camar</title>
+    <title>Tambo de Camar - AR</title>
     
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;700&display=swap" rel="stylesheet">
 
     <style>
-        body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: #fafafa; font-family: 'Roboto', sans-serif; }
+        /* --- ESTILOS GENERALES --- */
+        body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: #fafafa; font-family: 'Roboto', sans-serif; overflow: hidden; }
         model-viewer { width: 100%; height: 100%; }
 
-        /* PANTALLA DE INICIO (POSTER) */
+        /* --- PANTALLA DE INICIO (POSTER) --- */
         #poster-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #1a1a1a; color: white; z-index: 200;
             display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
         }
-        .title { font-size: 24px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;}
-        .subtitle { font-size: 14px; font-weight: 400; margin-bottom: 40px; opacity: 0.8; }
+        .title { font-size: 24px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .subtitle { font-size: 14px; font-weight: 300; margin-bottom: 40px; opacity: 0.8; max-width: 80%; line-height: 1.5; }
+        
         #start-button {
             background-color: #d84315; color: white; border: none; border-radius: 50px;
-            padding: 15px 40px; font-size: 18px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5); transition: transform 0.1s;
+            padding: 15px 40px; font-size: 16px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5); transition: transform 0.1s; text-transform: uppercase;
         }
         #start-button:active { transform: scale(0.95); }
 
-        /* --- NUEVO: BARRA DE ESTADO AR (Feedback Visual) --- */
+        /* --- BARRA DE ESTADO (HUD) --- */
         #ar-status-bar {
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
             color: white; padding: 10px 20px; border-radius: 30px;
             font-size: 13px; font-weight: bold; pointer-events: none;
-            display: none; /* Oculto por defecto */
-            white-space: nowrap; z-index: 999;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            white-space: nowrap;
         }
-        /* Icono de radar animado con CSS puro */
         .radar-icon {
             display: inline-block; width: 10px; height: 10px; background-color: #4CAF50;
-            border-radius: 50%; margin-right: 8px;
+            border-radius: 50%; margin-right: 10px;
             animation: pulse 1.5s infinite;
         }
-        @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); } 70% { opacity: 1; box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { opacity: 0; box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
 
-        /* VISIBILIDAD: Solo mostrar la barra cuando estemos en modo AR */
+        /* Mostrar barra solo en AR */
         model-viewer:defined.ar-active ~ #ar-status-bar { display: flex; align-items: center; }
 
-        /* Botón de respaldo (volver a colocar) */
+        /* --- BOTÓN DE REUBICACIÓN (Dentro del visor) --- */
         #ar-button {
-            position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
             background-color: white; color: #333; border: none; border-radius: 30px;
             padding: 12px 24px; font-size: 14px; font-weight: bold;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 100;
+        }
+
+        /* --- BOTÓN ROJO DE CALIBRACIÓN (IMPORTANTE: MODO DEBUG) --- */
+        #debug-button {
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(220, 0, 0, 0.9); color: white; border: 2px solid white;
+            padding: 8px 12px; font-family: monospace; font-size: 12px; font-weight: bold;
+            border-radius: 8px; cursor: pointer; z-index: 99999; /* Encima de la cámara */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
     </style>
 </head>
@@ -62,21 +71,22 @@
     <model-viewer 
         id="viewer"
         src="./tambo.glb" 
-        ios-src="./tambo.usdz"   alt="Reconstrucción Tambo"
+        ios-src="./tambo.usdz"
+        alt="Reconstrucción Virtual Tambo"
         ar 
         ar-modes="webxr scene-viewer quick-look" 
         ar-placement="floor"
         camera-controls 
         touch-action="pan-y"
         shadow-intensity="1.5"
-        scale="0.015 0.015 0.015"
+        scale="0.015 0.015 0.015" 
         loading="eager" 
-        reveal="manual">
+        reveal="manual"> 
 
         <div slot="poster" id="poster-container">
             <div class="title">TAMBO DE CAMAR</div>
-            <div class="subtitle">Experiencia de Realidad Aumentada</div>
-            <button id="start-button">📷 INICIAR ESCANEO</button>
+            <div class="subtitle">Puesta en Valor y Reconstrucción Virtual</div>
+            <button id="start-button">📷 INICIAR EXPERIENCIA</button>
         </div>
 
         <button slot="ar-button" id="ar-button">📍 REUBICAR</button>
@@ -85,72 +95,51 @@
 
     <div id="ar-status-bar">
         <span class="radar-icon"></span>
-        <span>Busca el círculo blanco y toca</span>
+        <span id="status-text">Mueve el celular para detectar la maqueta</span>
     </div>
+
+    <button id="debug-button">💾 DATOS</button>
 
     <script>
         const viewer = document.querySelector('#viewer');
         const startBtn = document.querySelector('#start-button');
         const poster = document.querySelector('#poster-container');
-        const statusBar = document.querySelector('#ar-status-bar');
+        const statusText = document.querySelector('#status-text');
+        const debugBtn = document.querySelector('#debug-button');
 
-        // 1. INICIAR EXPERIENCIA
+        // 1. INICIAR Y SALTAR A CÁMARA
         startBtn.addEventListener('click', () => {
             viewer.dismissPoster();
             poster.style.display = 'none';
-            viewer.activateAR();
+            viewer.activateAR(); // Intenta abrir cámara directo
         });
 
-        // 2. FEEDBACK TÁCTIL (Vibración)
-        // Detectamos cuando el usuario hace clic en el visor (intento de anclaje)
+        // 2. FEEDBACK HÁPTICO (VIBRACIÓN)
         viewer.addEventListener('click', () => {
-             // "navigator.vibrate" hace vibrar el celular (solo Android)
-             // Vibración corta de 50ms para sentir el "Click"
-             if (navigator.vibrate) {
-                 navigator.vibrate(50); 
-             }
+             if (navigator.vibrate) navigator.vibrate(50); 
         });
 
-        // 3. CAMBIAR TEXTO DE LA BARRA DE ESTADO
-        // No podemos saber EXÁCTAMENTE cuando encuentra el plano,
-        // pero podemos cambiar el texto cuando el usuario "toca" para anclar.
+        // 3. CAMBIAR INSTRUCCIONES
         viewer.addEventListener('ar-status', (event) => {
             if(event.detail.status === 'session-started'){
-                statusBar.innerHTML = '<span class="radar-icon"></span><span>Mueve el celular para detectar suelo</span>';
-                // Después de 3 segundos, asumimos que ya movió el cel y cambiamos la instrucción
+                statusText.innerText = 'Escaneando entorno...';
                 setTimeout(() => {
-                    statusBar.innerHTML = '<span class="radar-icon"></span><span>Busca el círculo y toca para fijar</span>';
+                    statusText.innerText = 'Toca el círculo para fijar el modelo';
                 }, 3000);
             }
         });
 
+        // 4. LÓGICA DE CALIBRACIÓN (DEBUG)
+        debugBtn.addEventListener('click', () => {
+            // Captura los valores actuales
+            const currentScale = viewer.scale.toString(); 
+            const currentOrientation = viewer.orientation.toString();
+
+            // Muestra alerta para copiar
+            alert(`GUARDA ESTA FOTO:\n\nscale="${currentScale}"\n\norientation="${currentOrientation}"`);
+        });
+
     </script>
-<button id="debug-button" style="
-    position: absolute; top: 20px; right: 20px;
-    background: rgba(0,0,0,0.7); color: #00ff00; border: 1px solid #00ff00;
-    padding: 5px 10px; font-family: monospace; font-size: 12px;
-    z-index: 9999; cursor: pointer;">
-    💾 GET DATA
-</button>
 
-<script>
-    const debugBtn = document.getElementById('debug-button');
-    const mv = document.querySelector('#viewer'); // Asegúrate que tu model-viewer tenga id="viewer"
-
-    debugBtn.addEventListener('click', () => {
-        // 1. Obtener la escala actual
-        // model-viewer devuelve la escala como "x y z", tomamos solo el primero ya que es uniforme
-        const currentScale = mv.scale.toString(); 
-        
-        // 2. Obtener la rotación (orientación)
-        const currentRotation = mv.orientation.toString();
-
-        // 3. Mostrar los datos en pantalla para que hagas captura
-        alert(`COPIA ESTOS DATOS:\n\nscale="${currentScale}"\n\norientation="${currentRotation}"`);
-        
-        console.log("Scale:", currentScale);
-        console.log("Orientation:", currentRotation);
-    });
-</script>
 </body>
 </html>
