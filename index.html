@@ -103,49 +103,45 @@
         const statusText = document.querySelector('#status-text');
         const debugBtn = document.querySelector('#debug-button');
 
+        // ==========================================
+        //  ¡AQUÍ CONTROLAS EL TAMAÑO!
+        //  0.06 es 4 veces más grande que antes.
+        //  Si sigue chico, prueba 0.1
+        //  Si es muy grande, prueba 0.04
+        // ==========================================
+        const FINAL_SCALE = '0.015 0.015 0.015'; 
+        
         let isPlaced = false;
 
-        // 1. INICIAR
         startBtn.addEventListener('click', () => {
             poster.style.display = 'none';
             viewer.dismissPoster();
             viewer.activateAR(); 
         });
 
-        // 2. LÓGICA DE APARICIÓN (CON RETRASO DE SEGURIDAD)
         viewer.addEventListener('click', (event) => {
-             // Solo ejecutamos si aún no está "colocado" visiblemente
              if (!isPlaced) {
-                 
-                 // VIBRAR (Feedback inmediato)
                  if (navigator.vibrate) navigator.vibrate(50);
-
-                 // ESPERAR 50ms para asegurar que el sistema AR registró el toque en el suelo
+                 
                  setTimeout(() => {
-                     
-                     // ¡AQUÍ ESTÁ EL CAMBIO! Asignación directa y forzada
-                     // Reemplaza estos números si tu escala calibrada es diferente
-                     viewer.scale = '0.015 0.015 0.015'; 
-                     
+                     viewer.scale = FINAL_SCALE; 
                      isPlaced = true;
                      statusText.innerText = 'Modelo colocado';
                      document.querySelector('.radar-icon').style.display = 'none';
-                     
                  }, 50);
              }
         });
 
-        // 3. RESETEO AL ENTRAR
         viewer.addEventListener('ar-status', (event) => {
             if(event.detail.status === 'session-started'){
                 statusText.innerText = 'Busca el círculo y TOCA para aparecer';
-                // Volvemos a microscópico al iniciar sesión nueva
                 viewer.scale = '0.0001 0.0001 0.0001'; 
                 isPlaced = false;
                 document.querySelector('.radar-icon').style.display = 'inline-block';
             }
         });
 
+        // BOTÓN DEBUG: Úsalo para ver el número exacto
         debugBtn.addEventListener('click', () => {
             const currentScale = viewer.scale.toString(); 
             const currentOrientation = viewer.orientation.toString();
