@@ -11,13 +11,9 @@
     <style>
         body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: 'Roboto', sans-serif; background-color: #f0f0f0; }
         
-        model-viewer { 
-            width: 100%; height: 100%; 
-            background-color: #f0f0f0;
-            transition: opacity 0.3s;
-        }
+        model-viewer { width: 100%; height: 100%; background-color: #f0f0f0; }
 
-        /* PANTALLA DE CARGA (POSTER) */
+        /* PANTALLA DE INICIO */
         #poster-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #1a1a1a; color: white; z-index: 200;
@@ -32,13 +28,14 @@
             box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5); text-transform: uppercase;
         }
 
-        /* BOTÓN DE BLOQUEO (CANDADO) */
+        /* --- BOTÓN CANDADO --- */
         #lock-button {
-            position: fixed; bottom: 30px; right: 30px;
+            position: absolute; /* Absolute relativo al visor */
+            bottom: 30px; right: 30px;
             width: 60px; height: 60px;
-            background-color: white; border-radius: 50%; border: none;
+            border-radius: 50%; border: none;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            font-size: 24px; cursor: pointer; z-index: 1000;
+            font-size: 24px; cursor: pointer; z-index: 10000;
             display: none; align-items: center; justify-content: center;
         }
         #lock-button.locked { background-color: #d32f2f; color: white; box-shadow: 0 0 15px rgba(211, 47, 47, 0.6); }
@@ -46,10 +43,10 @@
 
         /* Mensaje Toast */
         #status-toast {
-            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.7); color: white; padding: 8px 16px;
-            border-radius: 20px; font-size: 12px; pointer-events: none;
-            opacity: 0; transition: opacity 0.3s; z-index: 1001;
+            position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); color: white; padding: 10px 20px;
+            border-radius: 20px; font-size: 14px; pointer-events: none;
+            opacity: 0; transition: opacity 0.3s; z-index: 10001;
         }
     </style>
 </head>
@@ -61,7 +58,7 @@
         ios-src="./tambo.usdz"
         alt="Reconstrucción Virtual Tambo"
         ar 
-        ar-modes="webxr scene-viewer quick-look" 
+        ar-modes="webxr" 
         ar-placement="floor"
         camera-controls 
         touch-action="pan-y"
@@ -69,7 +66,7 @@
         shadow-softness="1"
         exposure="0.8"
         scale="0.06 0.06 0.06" 
-        orientation="0deg 0deg 200deg"
+        orientation="0deg 200deg 0deg"
         loading="eager" 
         reveal="manual"> 
 
@@ -79,10 +76,11 @@
             <button id="start-button">📷 INICIAR EXPERIENCIA</button>
         </div>
 
+        <button id="lock-button" class="unlocked">🔓</button>
+
     </model-viewer>
 
     <div id="status-toast">Modelo Bloqueado</div>
-    <button id="lock-button" class="unlocked">🔓</button>
 
     <script>
         const viewer = document.querySelector('#viewer');
@@ -100,9 +98,10 @@
             viewer.activateAR(); 
         });
 
-        // 2. MOSTRAR CANDADO AL ENTRAR EN AR
+        // 2. VISIBILIDAD DEL CANDADO
         viewer.addEventListener('ar-status', (event) => {
             if(event.detail.status === 'session-started'){
+                // Estamos en AR, mostramos el candado
                 lockBtn.style.display = 'flex'; 
             } else {
                 lockBtn.style.display = 'none';
@@ -110,22 +109,35 @@
         });
 
         // 3. LÓGICA DE BLOQUEO
-        lockBtn.addEventListener('click', () => {
+        lockBtn.addEventListener('click', (e) => {
+            // Evitamos que el clic traspase al modelo
+            e.stopPropagation();
+
             isLocked = !isLocked; 
 
             if (isLocked) {
-                // BLOQUEAR (Congelar interacción)
-                viewer.style.pointerEvents = 'none';
+                // BLOQUEAR: Quitamos interacción
+                // En modo WebXR, a veces pointer-events no basta, 
+                // así que desactivamos los controles de cámara del visor
+                viewer.cameraControls = false; 
+                viewer.style.pointerEvents = 'none'; // Capa extra de seguridad
+                
+                // Permitimos que el botón SÍ se pueda tocar
+                lockBtn.style.pointerEvents = 'auto';
+
                 lockBtn.innerText = '🔒';
                 lockBtn.className = 'locked';
-                showToast("Modelo Anclado (Bloqueado)");
+                showToast("🔒 MODELO FIJADO");
                 if (navigator.vibrate) navigator.vibrate([50, 50]);
+
             } else {
                 // DESBLOQUEAR
+                viewer.cameraControls = true;
                 viewer.style.pointerEvents = 'auto';
+                
                 lockBtn.innerText = '🔓';
                 lockBtn.className = 'unlocked';
-                showToast("Modelo Desbloqueado");
+                showToast("🔓 EDICIÓN HABILITADA");
                 if (navigator.vibrate) navigator.vibrate(50);
             }
         });
