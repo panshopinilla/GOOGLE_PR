@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tambo de Camar</title>
+    <title>Tambo de Camar - Final</title>
     
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
@@ -11,7 +11,6 @@
         body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: #fafafa; font-family: sans-serif; }
         model-viewer { width: 100%; height: 100%; }
 
-        /* Botón flotante al 15% de altura para evitar la barra del navegador */
         #ar-button {
             position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
             background-color: #d84315; color: white; border: none; border-radius: 30px;
@@ -20,17 +19,22 @@
             white-space: nowrap;
         }
 
+        /* Instrucciones mejoradas */
         #instructions {
             position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95); padding: 12px 25px; border-radius: 25px;
+            background: rgba(255, 255, 255, 0.95); padding: 15px 25px; border-radius: 25px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: none; text-align: center;
             width: 85%; max-width: 350px;
         }
         #instructions h3 { margin: 0 0 5px 0; font-size: 15px; color: #d84315; }
         #instructions p { margin: 0; font-size: 13px; color: #444; line-height: 1.4; }
 
+        /* Estilo para ocultar instrucciones en AR */
         model-viewer:defined > #instructions { display: block; }
         model-viewer:defined.ar-active > #instructions { display: none; }
+        
+        /* Personalizar la manito de ayuda (opcional) */
+        :not(:defined) > .slot-interaction-prompt { display: none; }
     </style>
 </head>
 <body>
@@ -40,11 +44,13 @@
         ios-src="./tambo.usdz"
         alt="Reconstrucción Tambo"
         ar 
-        ar-modes="webxr quick-look scene-viewer" 
+        ar-modes="webxr scene-viewer quick-look" 
         ar-placement="floor"
         camera-controls 
         touch-action="pan-y"
-        shadow-intensity="1.5"
+        interaction-prompt="auto"
+        shadow-intensity="1.2"
+        shadow-softness="1"
         scale="0.015 0.015 0.015">
 
         <button slot="ar-button" id="ar-button">
@@ -52,8 +58,8 @@
         </button>
 
         <div id="instructions">
-            <h3>Instrucciones</h3>
-            <p>1. Pulsa el botón "Colocar".<br>2. Apunta a la mesa y toca para fijar.<br>3. <b>Usa dos dedos para escalar.</b></p>
+            <h3>Antes de colocar:</h3>
+            <p>Mueve el celular de lado a lado para escanear la mesa.<br>Cuando veas un círculo, toca para fijar.</p>
         </div>
 
     </model-viewer>
