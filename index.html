@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Reconstrucción Tambo de Camar</title>
+    <title>Tambo de Camar</title>
     
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
@@ -11,27 +11,27 @@
         body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: #fafafa; font-family: sans-serif; }
         model-viewer { width: 100%; height: 100%; }
 
-        /* Botón de AR */
+        /* --- CORRECCIÓN DE INTERFAZ --- */
         #ar-button {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            /* Cambio clave: Usamos 15% en vez de px fijos. 
+               Esto lo sube por encima de la barra de Chrome/Safari */
+            position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
+            
             background-color: #d84315; color: white; border: none; border-radius: 30px;
-            padding: 12px 24px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 100;
-            display: flex; align-items: center; gap: 8px; white-space: nowrap;
+            padding: 14px 28px; font-size: 16px; font-weight: bold; letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; z-index: 100;
+            white-space: nowrap;
         }
-        #ar-button:active { transform: translateX(-50%) scale(0.95); }
 
-        /* Tarjeta de instrucciones (desaparece al entrar en AR) */
         #instructions {
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9); padding: 10px 20px; border-radius: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); pointer-events: none; text-align: center;
-            width: 80%; max-width: 300px;
+            position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95); padding: 12px 25px; border-radius: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: none; text-align: center;
+            width: 85%; max-width: 350px;
         }
-        #instructions p { margin: 0; font-size: 12px; color: #555; }
-        #instructions h3 { margin: 0 0 4px 0; font-size: 14px; color: #d84315; }
+        #instructions h3 { margin: 0 0 5px 0; font-size: 15px; color: #d84315; }
+        #instructions p { margin: 0; font-size: 13px; color: #444; line-height: 1.4; }
 
-        /* Ocultar elementos cuando se entra en modo AR nativo */
         model-viewer:defined > #instructions { display: block; }
         model-viewer:defined.ar-active > #instructions { display: none; }
     </style>
@@ -41,7 +41,7 @@
     <model-viewer 
         src="./tambo.glb" 
         ios-src="./tambo.usdz"
-        alt="Modelo 3D Tambo de Camar"
+        alt="Reconstrucción Tambo"
         ar 
         ar-modes="webxr scene-viewer quick-look" 
         ar-scale="fixed"
@@ -49,17 +49,15 @@
         camera-controls 
         touch-action="pan-y"
         shadow-intensity="1.5"
-        shadow-softness="0.8"
-        exposure="1"
-        scale="0.025 0.025 0.025">
+        scale="0.005 0.005 0.005">
 
         <button slot="ar-button" id="ar-button">
-            📍 COLOCAR EN SITIO
+            📍 COLOCAR EN MAQUETA
         </button>
 
         <div id="instructions">
-            <h3>Modo de Uso</h3>
-            <p>Presiona el botón, apunta a la mesa y toca para fijar el modelo.</p>
+            <h3>Instrucciones</h3>
+            <p>1. Pulsa el botón "Colocar".<br>2. Apunta a la mesa hasta ver el círculo.<br>3. Toca para fijar el modelo.</p>
         </div>
 
     </model-viewer>
