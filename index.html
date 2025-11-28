@@ -10,10 +10,9 @@
 
     <style>
         body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: 'Roboto', sans-serif; background-color: #f0f0f0; }
-        
-        model-viewer { width: 100%; height: 100%; background-color: #f0f0f0; }
+        model-viewer { width: 100%; height: 100%; }
 
-        /* PANTALLA DE INICIO (POSTER) */
+        /* PANTALLA DE INICIO */
         #poster-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #1a1a1a; color: white; z-index: 200;
@@ -28,7 +27,7 @@
             box-shadow: 0 4px 20px rgba(216, 67, 21, 0.5); text-transform: uppercase;
         }
 
-        /* BARRA DE ESTADO (Instrucciones visuales) */
+        /* BARRA DE ESTADO */
         #ar-status-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
@@ -43,10 +42,8 @@
         }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
 
-        /* Mostrar barra solo cuando la AR está activa */
         model-viewer:defined.ar-active ~ #ar-status-bar { display: flex; align-items: center; }
 
-        /* Botón Reubicar (dentro del visor) */
         #ar-button {
             position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
             background-color: white; color: #333; border: none; border-radius: 30px;
@@ -54,14 +51,11 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 100;
         }
 
-        /* --- BOTÓN DE DEBUG (ROJO) --- */
         #debug-button {
             position: fixed; top: 20px; right: 20px;
-            background: rgba(255, 0, 0, 0.8); /* Rojo intenso */
-            color: #fff; border: 2px solid white;
-            padding: 10px; font-family: monospace; font-size: 12px; font-weight: bold;
-            border-radius: 8px; cursor: pointer; z-index: 99999;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #fff;
+            padding: 5px; font-family: monospace; font-size: 10px;
+            border-radius: 4px; cursor: pointer; z-index: 99999;
         }
     </style>
 </head>
@@ -80,7 +74,7 @@
         shadow-intensity="1.5"
         shadow-softness="1"
         exposure="0.8"
-        scale="0.015 0.015 0.015" 
+        scale="0 0 0" 
         orientation="0deg 200deg 0deg" 
         loading="eager" 
         reveal="manual"> 
@@ -100,7 +94,7 @@
         <span id="status-text">Mueve el celular para detectar la maqueta</span>
     </div>
 
-    <button id="debug-button">💾 CAPTURAR DATOS</button>
+    <button id="debug-button">💾 DATOS</button>
 
     <script>
         const viewer = document.querySelector('#viewer');
@@ -109,36 +103,49 @@
         const statusText = document.querySelector('#status-text');
         const debugBtn = document.querySelector('#debug-button');
 
-        // 1. INICIAR EXPERIENCIA (SALTO DIRECTO A CÁMARA)
+        // --- CONFIGURACIÓN DE TU ESCALA FINAL ---
+        // Aquí pon el número que te gustó (ej: 0.015)
+        const FINAL_SCALE = '0.015 0.015 0.015';
+        let isModelPlaced = false;
+
         startBtn.addEventListener('click', () => {
             viewer.dismissPoster();
             poster.style.display = 'none';
             viewer.activateAR(); 
         });
 
-        // 2. VIBRACIÓN AL TOCAR
-        viewer.addEventListener('click', () => {
+        // LÓGICA DE APARICIÓN AL CLIC
+        viewer.addEventListener('click', (event) => {
+             // 1. Vibración
              if (navigator.vibrate) navigator.vibrate(50); 
+             
+             // 2. Si el modelo aún no se ha colocado...
+             if (!isModelPlaced) {
+                 // ¡HACERLO APARECER!
+                 viewer.scale = FINAL_SCALE;
+                 viewer.updateFraming(); // Actualiza sombras y cámara
+                 
+                 isModelPlaced = true;
+                 statusText.innerText = 'Modelo colocado. Arrastra para ajustar.';
+                 
+                 // Ocultamos el icono de radar porque ya lo encontramos
+                 document.querySelector('.radar-icon').style.display = 'none';
+             }
         });
 
-        // 3. CAMBIAR TEXTO DE ESTADO
         viewer.addEventListener('ar-status', (event) => {
             if(event.detail.status === 'session-started'){
-                statusText.innerText = 'Escaneando entorno...';
-                setTimeout(() => {
-                    statusText.innerText = 'Toca el círculo para fijar el modelo';
-                }, 3000);
+                statusText.innerText = 'Busca el círculo y TOCA para aparecer';
+                // Reseteamos por si re-inicia la sesión
+                viewer.scale = '0 0 0'; 
+                isModelPlaced = false;
             }
         });
 
-        // 4. FUNCIÓN DEBUG (CAPTURAR DATOS)
         debugBtn.addEventListener('click', () => {
-            // Captura los valores actuales del modelo en pantalla
             const currentScale = viewer.scale.toString(); 
             const currentOrientation = viewer.orientation.toString();
-            
-            // Muestra alerta para que copies los datos
-            alert(`COPIA ESTO EN TU CÓDIGO:\n\nscale="${currentScale}"\n\norientation="${currentOrientation}"`);
+            alert(`scale="${currentScale}"\n\norientation="${currentOrientation}"`);
         });
     </script>
 
