@@ -3,60 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Reconstrucción Virtual: Tambo de Camar</title>
+    <title>Reconstrucción Tambo de Camar</title>
     
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-
     <style>
-        body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #f5f5f5; color: #333; }
-        
-        model-viewer { width: 100vw; height: 100vh; background-color: #f5f5f5; }
+        body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: #fafafa; font-family: sans-serif; }
+        model-viewer { width: 100%; height: 100%; }
 
-        /* --- UI: TARJETA DE INSTRUCCIONES --- */
-        #ui-container {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background: linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0));
-            padding-bottom: 30px; padding-top: 60px;
-            display: flex; flex-direction: column; align-items: center;
-            pointer-events: none; /* Deja pasar clicks al modelo de fondo */
-        }
-
-        .instructions {
-            text-align: center; margin-bottom: 20px; pointer-events: auto;
-            background: rgba(255,255,255,0.9); padding: 15px; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 80%;
-        }
-        
-        .instructions h3 { margin: 0 0 5px 0; font-size: 16px; color: #d84315; text-transform: uppercase; letter-spacing: 1px; }
-        .instructions p { margin: 0; font-size: 13px; color: #666; line-height: 1.4; }
-
-        /* --- BOTÓN AR PERSONALIZADO --- */
+        /* Botón de AR */
         #ar-button {
-            pointer-events: auto;
-            background-color: #d84315; /* Color arcilla/tierra */
-            color: white; border: none; border-radius: 30px;
-            padding: 12px 30px; font-size: 16px; font-weight: bold;
-            box-shadow: 0 4px 10px rgba(216, 67, 21, 0.4);
-            display: flex; align-items: center; gap: 10px;
-            transition: transform 0.2s; cursor: pointer;
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background-color: #d84315; color: white; border: none; border-radius: 30px;
+            padding: 12px 24px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 100;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
         }
-        #ar-button:active { transform: scale(0.95); }
-        
-        /* Icono SVG dentro del botón */
-        .icon-ar { width: 24px; height: 24px; fill: white; }
+        #ar-button:active { transform: translateX(-50%) scale(0.95); }
 
-        /* --- BARRA DE CARGA --- */
-        .progress-bar {
-            display: block; width: 33%; height: 4px; border-radius: 2px;
-            background-color: rgba(0, 0, 0, 0.1); margin-bottom: 20px;
+        /* Tarjeta de instrucciones (desaparece al entrar en AR) */
+        #instructions {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9); padding: 10px 20px; border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); pointer-events: none; text-align: center;
+            width: 80%; max-width: 300px;
         }
-        .update-bar {
-            background-color: #d84315; width: 0%; height: 100%; border-radius: 2px;
-            transition: width 0.3s;
-        }
+        #instructions p { margin: 0; font-size: 12px; color: #555; }
+        #instructions h3 { margin: 0 0 4px 0; font-size: 14px; color: #d84315; }
 
+        /* Ocultar elementos cuando se entra en modo AR nativo */
+        model-viewer:defined > #instructions { display: block; }
+        model-viewer:defined.ar-active > #instructions { display: none; }
     </style>
 </head>
 <body>
@@ -64,44 +41,28 @@
     <model-viewer 
         src="./tambo.glb" 
         ios-src="./tambo.usdz"
-        poster="./poster_tambo.jpg" 
-        alt="Reconstrucción del Tambo de Camar"
+        alt="Modelo 3D Tambo de Camar"
         ar 
         ar-modes="webxr scene-viewer quick-look" 
+        ar-scale="fixed"
+        ar-placement="floor"
         camera-controls 
-        auto-rotate
-        shadow-intensity="1.5" 
+        touch-action="pan-y"
+        shadow-intensity="1.5"
         shadow-softness="0.8"
         exposure="1"
-        scale="0.018 0.018 0.018">
+        scale="0.025 0.025 0.025">
 
         <button slot="ar-button" id="ar-button">
-            <svg class="icon-ar" viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3m12 0h6v6h-2V5h-4V3m4 12h2v6h-6v-2h4v-4M3 15h2v4h4v2H3v-6r0 0z"/></svg>
-            VER EN SITIO
+            📍 COLOCAR EN SITIO
         </button>
 
-        <div slot="progress-bar" class="progress-bar">
-            <div class="update-bar"></div>
-        </div>
-
-        <div id="ui-container">
-            <div class="instructions">
-                <h3>Instrucciones</h3>
-                <p>1. Pulsa "Ver en Sitio".<br>2. Apunta a la maqueta.<br>3. Arrastra el modelo para alinearlo.</p>
-            </div>
+        <div id="instructions">
+            <h3>Modo de Uso</h3>
+            <p>Presiona el botón, apunta a la mesa y toca para fijar el modelo.</p>
         </div>
 
     </model-viewer>
 
-    <script>
-        // Script simple para animar la barra de carga
-        const modelViewer = document.querySelector('model-viewer');
-        const progressBar = document.querySelector('.update-bar');
-
-        modelViewer.addEventListener('progress', (event) => {
-            const percentage = event.detail.totalProgress * 100;
-            progressBar.style.width = `${percentage}%`;
-        });
-    </script>
 </body>
 </html>
