@@ -75,7 +75,7 @@
         shadow-softness="1"
         exposure="0.8"
         scale="0.0001 0.0001 0.0001" 
-        orientation="0deg 0deg 200deg"
+        orientation="0deg 200deg 0deg"
         loading="eager" 
         reveal="manual"> 
 
@@ -103,8 +103,6 @@
         const statusText = document.querySelector('#status-text');
         const debugBtn = document.querySelector('#debug-button');
 
-        // TU ESCALA FINAL
-        const FINAL_SCALE = '0.015 0.015 0.015';
         let isPlaced = false;
 
         // 1. INICIAR
@@ -114,21 +112,26 @@
             viewer.activateAR(); 
         });
 
-        // 2. LÓGICA DE APARICIÓN (SOLUCIÓN GLOBAL)
-        // Usamos un listener en todo el viewer, no esperamos a tocar el modelo
+        // 2. LÓGICA DE APARICIÓN (CON RETRASO DE SEGURIDAD)
         viewer.addEventListener('click', (event) => {
-             if (isPlaced) return; // Si ya está colocado, no hacemos nada
-
-             // Verificamos que estemos en modo AR
-             if (viewer.canActivateAR) {
-                 viewer.scale = FINAL_SCALE; // ¡Aquí crece!
-                 isPlaced = true;
-                 statusText.innerText = 'Modelo colocado';
+             // Solo ejecutamos si aún no está "colocado" visiblemente
+             if (!isPlaced) {
                  
-                 // Ocultar radar
-                 document.querySelector('.radar-icon').style.display = 'none';
-
+                 // VIBRAR (Feedback inmediato)
                  if (navigator.vibrate) navigator.vibrate(50);
+
+                 // ESPERAR 50ms para asegurar que el sistema AR registró el toque en el suelo
+                 setTimeout(() => {
+                     
+                     // ¡AQUÍ ESTÁ EL CAMBIO! Asignación directa y forzada
+                     // Reemplaza estos números si tu escala calibrada es diferente
+                     viewer.scale = '0.015 0.015 0.015'; 
+                     
+                     isPlaced = true;
+                     statusText.innerText = 'Modelo colocado';
+                     document.querySelector('.radar-icon').style.display = 'none';
+                     
+                 }, 50);
              }
         });
 
@@ -136,7 +139,7 @@
         viewer.addEventListener('ar-status', (event) => {
             if(event.detail.status === 'session-started'){
                 statusText.innerText = 'Busca el círculo y TOCA para aparecer';
-                // Lo hacemos microscópico, no cero absoluto
+                // Volvemos a microscópico al iniciar sesión nueva
                 viewer.scale = '0.0001 0.0001 0.0001'; 
                 isPlaced = false;
                 document.querySelector('.radar-icon').style.display = 'inline-block';
