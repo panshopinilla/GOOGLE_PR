@@ -10,7 +10,6 @@
 
     <style>
         body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: 'Roboto', sans-serif; background-color: #f0f0f0; }
-        
         model-viewer { width: 100%; height: 100%; background-color: #f0f0f0; }
 
         /* PANTALLA DE INICIO */
@@ -75,7 +74,7 @@
         shadow-intensity="1.5"
         shadow-softness="1"
         exposure="0.8"
-        scale="0 0 0" 
+        scale="0.0001 0.0001 0.0001" 
         orientation="0deg 0deg 200deg"
         loading="eager" 
         reveal="manual"> 
@@ -104,7 +103,7 @@
         const statusText = document.querySelector('#status-text');
         const debugBtn = document.querySelector('#debug-button');
 
-        // TU ESCALA FINAL (La que quieres que tenga al aparecer)
+        // TU ESCALA FINAL
         const FINAL_SCALE = '0.015 0.015 0.015';
         let isPlaced = false;
 
@@ -115,25 +114,32 @@
             viewer.activateAR(); 
         });
 
-        // 2. LÓGICA DE APARICIÓN (TAP TO PLACE)
+        // 2. LÓGICA DE APARICIÓN (SOLUCIÓN GLOBAL)
+        // Usamos un listener en todo el viewer, no esperamos a tocar el modelo
         viewer.addEventListener('click', (event) => {
-             // Solo actuamos si NO está colocado todavía
-             if(!isPlaced) {
+             if (isPlaced) return; // Si ya está colocado, no hacemos nada
+
+             // Verificamos que estemos en modo AR
+             if (viewer.canActivateAR) {
                  viewer.scale = FINAL_SCALE; // ¡Aquí crece!
                  isPlaced = true;
                  statusText.innerText = 'Modelo colocado';
                  
+                 // Ocultar radar
+                 document.querySelector('.radar-icon').style.display = 'none';
+
                  if (navigator.vibrate) navigator.vibrate(50);
              }
         });
 
-        // 3. RESETEO INTELIGENTE
-        // Si la sesión AR se cierra o reinicia, volvemos a esconder el modelo
+        // 3. RESETEO AL ENTRAR
         viewer.addEventListener('ar-status', (event) => {
             if(event.detail.status === 'session-started'){
                 statusText.innerText = 'Busca el círculo y TOCA para aparecer';
-                viewer.scale = '0 0 0'; // Lo escondemos al entrar
+                // Lo hacemos microscópico, no cero absoluto
+                viewer.scale = '0.0001 0.0001 0.0001'; 
                 isPlaced = false;
+                document.querySelector('.radar-icon').style.display = 'inline-block';
             }
         });
 
