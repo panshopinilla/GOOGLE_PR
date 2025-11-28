@@ -125,6 +125,32 @@
         });
 
     </script>
+<button id="debug-button" style="
+    position: absolute; top: 20px; right: 20px;
+    background: rgba(0,0,0,0.7); color: #00ff00; border: 1px solid #00ff00;
+    padding: 5px 10px; font-family: monospace; font-size: 12px;
+    z-index: 9999; cursor: pointer;">
+    💾 GET DATA
+</button>
 
+<script>
+    const debugBtn = document.getElementById('debug-button');
+    const mv = document.querySelector('#viewer'); // Asegúrate que tu model-viewer tenga id="viewer"
+
+    debugBtn.addEventListener('click', () => {
+        // 1. Obtener la escala actual
+        // model-viewer devuelve la escala como "x y z", tomamos solo el primero ya que es uniforme
+        const currentScale = mv.scale.toString(); 
+        
+        // 2. Obtener la rotación (orientación)
+        const currentRotation = mv.orientation.toString();
+
+        // 3. Mostrar los datos en pantalla para que hagas captura
+        alert(`COPIA ESTOS DATOS:\n\nscale="${currentScale}"\n\norientation="${currentRotation}"`);
+        
+        console.log("Scale:", currentScale);
+        console.log("Orientation:", currentRotation);
+    });
+</script>
 </body>
 </html>
