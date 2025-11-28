@@ -10,6 +10,8 @@
 
     <style>
         body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: 'Roboto', sans-serif; background-color: #f0f0f0; }
+        
+        /* FONDO */
         model-viewer { width: 100%; height: 100%; background-color: #f0f0f0; }
 
         /* PANTALLA DE INICIO */
@@ -74,7 +76,7 @@
         shadow-intensity="1.5"
         shadow-softness="1"
         exposure="0.8"
-        scale="0.0001 0.0001 0.0001" 
+        scale="0.06 0.06 0.06" 
         orientation="0deg 0deg 200deg"
         loading="eager" 
         reveal="manual"> 
@@ -91,7 +93,7 @@
 
     <div id="ar-status-bar">
         <span class="radar-icon"></span>
-        <span id="status-text">Mueve el celular para detectar la maqueta</span>
+        <span id="status-text">Escaneando superficie...</span>
     </div>
 
     <button id="debug-button">💾 DATOS</button>
@@ -103,45 +105,30 @@
         const statusText = document.querySelector('#status-text');
         const debugBtn = document.querySelector('#debug-button');
 
-        // ==========================================
-        //  ¡AQUÍ CONTROLAS EL TAMAÑO!
-        //  0.06 es 4 veces más grande que antes.
-        //  Si sigue chico, prueba 0.1
-        //  Si es muy grande, prueba 0.04
-        // ==========================================
-        const FINAL_SCALE = '0.015 0.015 0.015'; 
-        
-        let isPlaced = false;
-
+        // 1. INICIAR (Directo a cámara)
         startBtn.addEventListener('click', () => {
             poster.style.display = 'none';
             viewer.dismissPoster();
             viewer.activateAR(); 
         });
 
-        viewer.addEventListener('click', (event) => {
-             if (!isPlaced) {
-                 if (navigator.vibrate) navigator.vibrate(50);
-                 
-                 setTimeout(() => {
-                     viewer.scale = FINAL_SCALE; 
-                     isPlaced = true;
-                     statusText.innerText = 'Modelo colocado';
-                     document.querySelector('.radar-icon').style.display = 'none';
-                 }, 50);
-             }
+        // 2. Feedback Táctil (Vibración)
+        viewer.addEventListener('click', () => {
+             if (navigator.vibrate) navigator.vibrate(50); 
         });
 
+        // 3. Status simple
         viewer.addEventListener('ar-status', (event) => {
             if(event.detail.status === 'session-started'){
-                statusText.innerText = 'Busca el círculo y TOCA para aparecer';
-                viewer.scale = '0.0001 0.0001 0.0001'; 
-                isPlaced = false;
-                document.querySelector('.radar-icon').style.display = 'inline-block';
+                statusText.innerText = 'Mueve el celular para detectar suelo';
+                // A los 3 seg cambiamos el texto
+                setTimeout(() => {
+                    statusText.innerText = 'Arrastra y escala con dos dedos';
+                }, 3000);
             }
         });
 
-        // BOTÓN DEBUG: Úsalo para ver el número exacto
+        // 4. Debug (Para que encuentres tu escala ideal)
         debugBtn.addEventListener('click', () => {
             const currentScale = viewer.scale.toString(); 
             const currentOrientation = viewer.orientation.toString();
